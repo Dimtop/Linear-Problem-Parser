@@ -77,12 +77,17 @@ function getProblemTypeIdentifier(data){
             return [1];
         default:
             console.error("The problem type identifier was not found. Please ensure that the first three characters of your document make up either the word min or max.");
-            return;
+            process.exit(1);
     }
 }
 
 function getFunctionLimit(data){
-    if(data.indexOf("st")>0){
+
+    if(data.indexOf("st") != data.indexOf("_nl_") + 4 && data.indexOf("s.t.") != data.indexOf("_nl_") + 4 && data.indexOf("subjectto") != data.indexOf("_nl_") + 4){
+        console.error("The restrictions initializer is misplaced or not included at all. Please ensure that it is placed right before the restrictions");
+        process.exit(1);
+    }
+    else if(data.indexOf("st")>0){
         return data.indexOf("st");
     }
     else if(data.indexOf("s.t.")>0){
@@ -91,10 +96,7 @@ function getFunctionLimit(data){
     else if(data.indexOf("subjectto")>0){
         return data.indexOf("subjectto");
     }
-    else{
-        console.error("No restrictions initializer was found. Please ensure that you have included the identifier 'st' or 's.t.' or 'sucject to' before the restrictions");
-        return;
-    }
+  
     
 }
 
@@ -114,7 +116,7 @@ function normalizeAndcheckVariables(variables){
     for(var i = 1; i<variables.length;i++){
         if(variables[i] != variables[i-1]){
             console.error("The variable symbols are not the same. Please use a unique symbol (x is suggested) for all the variables, followed by its index.");
-            return;
+            process.exit(1);
         }
     }
 }
@@ -133,7 +135,7 @@ function getVaribleIndexesArray(functionArray, variableSymbol){
             }
             else{
                 console.error("A variable without index was found. Please ensure that all the variables have their indexes assigned by their right side.");
-                return;
+                process.exit(1);
             }
         }
     }
@@ -192,7 +194,7 @@ function getAndCheckOpernands(functionArray,variablesIndexArray,factorsArray,ope
         }
         else{
             console.error("There was an error with an operand. Please ensure that all the operands are placed in the right side of the variables factors.");
-            return;
+            process.exit(1);
         }
     }
     else{
@@ -209,7 +211,7 @@ function getAndCheckOpernands(functionArray,variablesIndexArray,factorsArray,ope
         }
         else{
             console.error("There was an error with an operand. Please ensure that all the operands are placed in the right side of the variables factors.");
-            return;
+            process.exit(1);
         }
         
     }
