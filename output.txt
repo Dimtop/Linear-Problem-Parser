@@ -1,0 +1,14 @@
+Min or Max:
+-1
+
+C table:
+[0,12,-1,-2]
+
+A table:
+[[0,-1,-1,9],[0,1,4,1],[0,1],[0,12]]
+
+Inequalities operators (eqin table):
+[0,1,-1,-1]
+
+B table:
+["12","3","0","0"]
