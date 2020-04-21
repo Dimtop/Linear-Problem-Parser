@@ -74,7 +74,7 @@ app.listen(PORT,'0.0.0.0',(err)=>{
         console.log(err);
     }
     else{
-        fs.readdir(path.join(__dirname,"build"), (err,files)=>{
+        fs.readdir(path.join(__dirname,"dist"), (err,files)=>{
             console.log(files);
         });
         console.log("Up and running on port: "  + PORT);
