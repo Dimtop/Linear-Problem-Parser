@@ -4,7 +4,7 @@
   "description": "A linear proble parser.",
   "main": "server.js",
   "scripts": {
-    "build": "node server.js",
+    "build": "webpack",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js"
   },
