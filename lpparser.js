@@ -1,82 +1,118 @@
 const fs = require('fs');
+const path = require('path');
+const util = require('util');
+var data = "";
+var parsedProblem = "";
+var errors = "";
+
+function parseLinearProblem(filenameInput){
+   
+
+    data = fs.readFileSync(filenameInput, 'utf-8');
+
+ 
+    var MinMax = [];
+    var A = [];
+    var b = [];
+    var c = [];
+    var cOperands = [];
+    var Eqin = [];
 
 
+    var restrictionsIdentifier = "";
+    var functionLimit = 2;
+    var variableSymbol = "-";
+    var functionArray = [];
+    var variables = [];
+    var indexArray = [];
 
-function parseLinearProblem(filename){
-    fs.readFile(filename, 'utf-8', (err,data)=>{
-        if (err){
-            console.log(err);
-        }
-        
-        var MinMax = [];
-        var A = [];
-        var b = [];
-        var c = [];
-        var cOperands = [];
-        var Eqin = [];
+    var restrictionsArrays = [];
+    var restrictionTypesIndexes = [];
+    var restrictionVariables = [];
+    var restrictionVariableSymbols = [];
+    var restrictionVariableIndexesArray = [];
+    var restrictionOperands = [];
     
+
+    //NORMALIZING THE DATA
+    data = normalizeData(data);
+
+    //MIN - MAX
+    MinMax = getProblemTypeIdentifier(data);
+    if(errors != ""){
+        return {content:errors,hasErrors:true};
+    }
+
+    //FINDING THE FUNCTION LIMIT
+    [functionLimit, restrictionsIdentifier] = getFunctionLimit(data);
+    if(errors != ""){
+        return {content:errors,hasErrors:true};
+    }
+
+    //GETTING THE FUNCTIION ARRAY
+    functionArray = getFunctionArray(data, functionLimit);
+
+    //CHECKING IF ALL THE VARIABLE SYMBOLS OF THE FUNCTION ARE THE SAME.
+    variables = getVariables(functionArray);
+    normalizeAndcheckVariables(variables);
+    if(errors != ""){
+        return {content:errors,hasErrors:true};
+    }
+    variableSymbol = getVariableSymbol(variables);
+
+    //CHECKING IF ALL THE VARIABLES HAVE AN INDEX AND SAVING THEM
+    indexArray = getVariableIndexesArray(functionArray,variableSymbol);
+    if(errors != ""){
+        return {content:errors,hasErrors:true};
+    }
+
+    //INTIALIZING THE C ARRAY
+    initializeFactorsArray(indexArray,c);
+
+    //CHECKING AND SAVING THE FACTORS (CREATING THE C ARRAY)
+    getFactors(functionArray,indexArray,c);
+
+    //CHECKING AND GETTING THE OPERANDS
+    getAndCheckOpernands(functionArray,indexArray,c,cOperands);
+    if(errors != ""){
+        return {content:errors,hasErrors:true};
+    }
     
-        var restrictionsIdentifier = "";
-        var functionLimit = 2;
-        var variableSymbol = "-";
-        var functionArray = [];
-        var variables = [];
-        var indexArray = [];
+    applyOperandsToFactors(c,cOperands);
+    if(errors != ""){
+        return {content:errors,hasErrors:true};
+    }
+
+    //GET RESTRICTIONS ARRAYS
+    restrictionsArrays = getRestrictionsArrays(data,functionLimit,restrictionsIdentifier);
+
+    //GET RESTRICITON TYPES (Eqin array)
+    [Eqin,restrictionTypesIndexes] = getRestrictionTypes(restrictionsArrays);
+    if(errors != ""){
+        return {content:errors,hasErrors:true};
+    }
+
+
+    //GET RESTRICTIONS RIGHT SIDES
+    b = getRestrictionsRightSides(restrictionsArrays,Eqin,restrictionTypesIndexes);
+    if(errors != ""){
+        return {content:errors,hasErrors:true};
+    }
+
+    //ANALYZE RESTRICTIONS LEFT SIDES
+    [restrictionVariables,restrictionVariableSymbols,restrictionVariableIndexesArray,A,restrictionOperands] =
+    parseRestrictionsLeftSides(restrictionsArrays,restrictionTypesIndexes,variableSymbol);
+    if(errors != ""){
+        return {content:errors,hasErrors:true};
+    }
+
+    parsedProblem =  printLinearProblem(A,b,c,Eqin,MinMax);  
+
+
+    return {content:parsedProblem,hasErrors:false};
     
-        var restrictionsArrays = [];
-        var restrictionTypesIndexes = [];
-        var restrictionVariables = [];
-        var restrictionVariableSymbols = [];
-        var restrictionVariableIndexesArray = [];
-        var restrictionOperands = [];
-    
-        //NORMALIZING THE DATA
-        data = normalizeData(data);
-    
-        //MIN - MAX
-        MinMax = getProblemTypeIdentifier(data);
-    
-        //FINDING THE FUNCTION LIMIT
-        [functionLimit, restrictionsIdentifier] = getFunctionLimit(data);
-    
-        //GETTING THE FUNCTIION ARRAY
-        functionArray = getFunctionArray(data, functionLimit);
-    
-        //CHECKING IF ALL THE VARIABLE SYMBOLS OF THE FUNCTION ARE THE SAME.
-        variables = getVariables(functionArray);
-        normalizeAndcheckVariables(variables);
-        variableSymbol = getVariableSymbol(variables);
-    
-        //CHECKING IF ALL THE VARIABLES HAVE AN INDEX AND SAVING THEM
-        indexArray = getVariableIndexesArray(functionArray,variableSymbol);
-    
-        //INTIALIZING THE C ARRAY
-        initializeFactorsArray(indexArray,c);
-    
-        //CHECKING AND SAVING THE FACTORS (CREATING THE C ARRAY)
-        getFactors(functionArray,indexArray,c);
-    
-        //CHECKING AND GETTING THE OPERANDS
-        getAndCheckOpernands(functionArray,indexArray,c,cOperands);
-        
-        applyOperandsToFactors(c,cOperands);
-    
-        //GET RESTRICTIONS ARRAYS
-        restrictionsArrays = getRestrictionsArrays(data,functionLimit,restrictionsIdentifier);
-    
-        //GET RESTRICITON TYPES (Eqin array)
-        [Eqin,restrictionTypesIndexes] = getRestrictionTypes(restrictionsArrays);
-    
-    
-        //GET RESTRICTIONS RIGHT SIDES
-        b = getRestrictionsRightSides(restrictionsArrays,Eqin,restrictionTypesIndexes);
-    
-        //ANALYZE RESTRICTIONS LEFT SIDES
-        [restrictionVariables,restrictionVariableSymbols,restrictionVariableIndexesArray,A,restrictionOperands] =
-        parseRestrictionsLeftSides(restrictionsArrays,restrictionTypesIndexes,variableSymbol);
-    
-        printLinearProblem(A,b,c,Eqin,MinMax);
-    });
+
+
 }
 
 
@@ -100,8 +136,8 @@ function getProblemTypeIdentifier(data){
         case "max":
             return [1];
         default:
-            console.error("The problem type identifier was not found. Please ensure that the first three characters of your document make up either the word min or max.");
-            process.exit(1);
+            errors = "The problem type identifier was not found. Please ensure that the first three characters of your document make up either the word min or max.\n";
+            return;
     }
 }
 
@@ -109,7 +145,7 @@ function getFunctionLimit(data){
 
     if(data.indexOf("st") != data.indexOf("_nl_") + 4 && data.indexOf("s.t.") != data.indexOf("_nl_") + 4 && data.indexOf("subjectto") != data.indexOf("_nl_") + 4){
         console.error("The restrictions initializer is misplaced or not included at all. Please ensure that it is placed right before the restrictions");
-        process.exit(1);
+        return;
     }
     else if(data.indexOf("st")>0){
         return [data.indexOf("st"), "st"];
@@ -139,8 +175,8 @@ function normalizeAndcheckVariables(variables){
 
     for(var i = 1; i<variables.length;i++){
         if(variables[i] != variables[i-1]){
-            console.error("The variable symbols are not the same. Please use the same symbol (x is suggested) for all the variables, followed by its index.");
-            process.exit(1);
+            errors = "The variable symbols are not the same. Please use the same symbol (x is suggested) for all the variables, followed by its index.";
+            return;
         }
     }
 }
@@ -157,8 +193,8 @@ function getVariableIndexesArray(functionArray, variableSymbol){
         var currIndex = "";
         if(functionArray[i] == variableSymbol){
             if(!functionArray[i+1].match(/[0-9]+/g)){
-                console.error("A variable without index was found. Please ensure that all the variables have their indexes assigned by their right side.");
-                process.exit(1);
+                errors = "A variable without index was found. Please ensure that all the variables have their indexes assigned by their right side.";
+                return;
             }
             else{
                 while(functionArray[i+j+1].match(/[0-9]+/g)){
@@ -230,8 +266,8 @@ function getAndCheckOpernands(functionArray,variablesIndexArray,factorsArray,ope
             operandsArray.push({index:variablesIndexArray[0].variableIndex,operand:"-"});
         }
         else{
-            console.error("There was an error with an operand. Please ensure that all the operands are placed in the right side of the variables factors.");
-            process.exit(1);
+            errors = "There was an error with an operand. Please ensure that all the operands are placed in the right side of the variables factors.";
+            return;
         }
     }
     else{
@@ -247,8 +283,8 @@ function getAndCheckOpernands(functionArray,variablesIndexArray,factorsArray,ope
             operandsArray.push({index:variablesIndexArray[i].variableIndex,operand:"-"});
         }
         else{
-            console.error("There was an error with an operand. Please ensure that all the operands are placed in the right side of the variables factors.");
-            process.exit(1);
+            errors = "There was an error with an operand. Please ensure that all the operands are placed in the right side of the variables factors.";
+            return;
         }
         
     }
@@ -270,8 +306,8 @@ function applyOperandsToFactors(factorsArray, operandsArray){
                 factorsArray[operandsArray[i].index] = Number(factorsArray[operandsArray[i].index].replace(",","."));
                 break;
             default:
-                console.error("There was an error with an operand. Please ensure that all the operands are placed in the right side of the variables factors.");
-                process.exit(1);
+                errors = "There was an error with an operand. Please ensure that all the operands are placed in the right side of the variables factors.";
+                return;
         }
     }
     for(var i=0;i<factorsArray.length;i++){
@@ -303,8 +339,8 @@ function getRestrictionTypes(restrictionsArrays){
             restrictionTypes.push(0);
         }
         else{
-            console.error("No restriction type operator was found for the restriction number " + i +". Please include all the operators, choosing from =, >=, <=");
-            process.exit(1);
+            errors = "No restriction type operator was found for the restriction number " + i +". Please include all the operators, choosing from =, >=, <=";
+            return;
         }
     }
 
@@ -317,8 +353,8 @@ function getRestrictionsRightSides(restrictionsArrays, restrictionTypes, restric
 
     for(var i=0;i<restrictionsArrays.length;i++){
         if(restrictionsArrays[i].slice(restrictionTypesIndexes[i] + Math.abs(restrictionTypes[i] * 2) + 1 - Math.abs(restrictionTypes[i]), restrictionsArrays[i].length-4) == ""){
-            console.error("The restriction number " + i + " has no right side.");
-            process.exit(1);
+            errors = "The restriction number " + i + " has no right side.";
+            return;
         }
         rightSidesArray.push(restrictionsArrays[i].slice(restrictionTypesIndexes[i] + Math.abs(restrictionTypes[i] * 2) + 1 - Math.abs(restrictionTypes[i]), restrictionsArrays[i].length-4));
     }
@@ -348,8 +384,8 @@ function parseRestrictionsLeftSides(restrictionsArrays,restrictionTypesIndexes,v
         restrictionVariablesSymbols[i] = getVariableSymbol(restrictionVariables[i]);
         /*5*/
         if(restrictionVariablesSymbols[i] != variableSymbol){
-            console.error("The variable symbol of the restriction number " + i + " was not the same with the variable symbol of the function.");
-            process.exit(1);
+            errors = "The variable symbol of the restriction number " + i + " was not the same with the variable symbol of the function.";
+            return;
         }
         /*6*/
         restrictionVariableIndexes[i] = getVariableIndexesArray(currRestrictionArray,restrictionVariablesSymbols[i]);
@@ -382,12 +418,8 @@ function printLinearProblem(A,b,c,Eqin,MinMax){
     "B table:" + '\n' + 
     JSON.stringify(b); 
 
-    fs.writeFile("./output.txt", content, (err)=>{
-        if(err){
-            throw err;
-        }
-        console.log("Saved");
-    });
+   return content;
+ 
 }
 
 

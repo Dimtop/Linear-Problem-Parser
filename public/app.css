@@ -1,0 +1,68 @@
+body{
+    height:100vh;
+    background-image: linear-gradient(to left,orange,purple);
+    display: flex;
+}
+
+
+.custom-file{
+    width: 100%;
+}
+
+#customFile{
+    width: 50%;
+}
+
+.custom-file-label{
+    width: 80%;
+    margin:auto;
+}
+
+#appContainer{
+    position: relative;
+    margin:auto;
+    top:0;
+    bottom:0;
+    left:0;
+    right:0;
+    justify-content: center;
+}
+
+#title,#subtitle,#githubPromo,#githubLink,#errors{
+    color:white;
+    text-align: center;
+}
+
+#errors{
+    margin-bottom: 5rem;
+    font-weight: bold;
+}
+
+#githubPromo,#errors{
+    margin-top: 5rem;
+}
+#githubLink{
+    font-weight: bold;
+}
+#author{
+    float: right;
+    color:white;
+    margin-bottom: 5rem;
+}
+
+#parseButtonDiv,#resetButtonDiv{
+    width: 100%;
+    text-align: center;
+}
+#parseButton,#resetButton{
+    color:white;
+    font-weight: bold;
+    border:2px solid white;
+    margin-top: 2rem;
+    width: 10rem;
+}
+#parseButton:hover,#resetButton:hover{
+    background-color: white;
+    color: purple;
+    opacity:0.5;
+}

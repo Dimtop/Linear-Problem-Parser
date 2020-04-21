@@ -1,4 +1,4 @@
 const lpparser = require('./lpparser.js');
-lpparser('./lp1.txt');
+console.log(lpparser('./lp1.txt'));
 
 
