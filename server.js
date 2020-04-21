@@ -20,7 +20,7 @@ app.use(bodyParser.json());
 console.log(path.join(__dirname, "public"));
 //routes
 app.get("/", (req,res)=>{
-
+    console.log("Got it");
     fs.readdir('./tmp', (err,files)=>{
         if(err){
             console.log(err);
