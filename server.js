@@ -40,9 +40,7 @@ app.get("/", (req,res)=>{
    
 });
 
-app.get("*", (req,res)=>{
-    res.redirect("/");
-});
+
 
 app.post("/", upload.single('inputFile'),  (req,res)=>{
 
