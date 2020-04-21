@@ -6,11 +6,12 @@ const upload = multer({dest:path.join(__dirname ,'/tmp')});
 const lpparser =  require('./lpparser');
 const fs = require('fs');
 const app = express();
+const dotenv = require('dotenv');
 const PORT = process.env.PORT | 5000;
 
 
 //config
-
+dotenv.config();
 app.set("view engine", "ejs");
 app.use(express.static(path.join(__dirname,"public")));
 app.use(bodyParser.urlencoded({ extended: false }));
